@@ -1,0 +1,28 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      nodejs: 12
+    commands:
+      - echo Getting started      
+  pre_build:
+    commands:
+      - echo Installing some packages and source NPM dependencies
+      - npm install
+      - aws --version
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo first test codes
+      - CI=true npm test
+      - echo compiling the codes
+      - npm run build
+      - echo Build finished, now moving to S3                         
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - aws s3 sync build/ s3://session10-static --acl public-read
+artifacts:
+  files:
+    - "build/*"
+  name: demoProjectArtifact      
