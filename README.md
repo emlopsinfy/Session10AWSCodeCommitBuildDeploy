@@ -141,6 +141,12 @@ You have to run that file again asks for MFA token, then you can git https src c
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 
+##### Assignment Part 1 - Hosing react app using codecommit, s3, code build.
+
+##### Hosted link will be on S3 Static Website!
+
+
+
 ##### Git Push
 
 Then adding few files, pushing it, and just playing around it.
@@ -264,8 +270,6 @@ It created the role for us.
 
 Then create build project!
 
-##### Removed “CI=true npm test” line under build from buildspec.yml file, then only code build project succeeded.
-
 ##### Enabled ACL, Static website hosting on S3
 
 ##### Updated Artifacts on Codebuild as Zip, ticked the check box - allow aws codebuild to modify the service role.
@@ -275,6 +279,24 @@ Then create build project!
 default policy will be there, code commit power user, s3 full access, ec2 container registry power user (for future), code build admin access, cloud watch full access.
 
 After successful build, you can check the s3 bucket Static website hosting, you will get the link on which react app hosted.
+
+##### Adding Artifacts
+
+Assignment 1 for you is to add an artifact (in this case zip of your build files) and then move it to S3. For that, you'll have to change your buildspec, by adding something like this:
+
+##### Edit artifacts on Code build...
+
+zip
+
+build id
+
+give all -refer video
+
+update artifacts
+
+retry build now
+
+artifacts would have been added.
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -314,6 +336,16 @@ So now whenever there is a code change, auto build happens, it worked.
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
+##### Assignment Part 2 - Hosting react app on EC2
+
+##### Creating another repo for Code Deploy
+
+session10codedeploy
+
+go inside then
+
+“npx express-generator” - It is going to create the small express application...
+
 ##### EC2
 
 Launch Instance
@@ -333,6 +365,18 @@ check box EC2 on common instances
 created role..
 
 Select created role now on EC2
+
+On security group:
+
+add rule - 
+
+type - custom TCP
+
+protocol - TCP
+
+port range - 3000
+
+source - anywhere
 
 Review and Launch!
 
@@ -362,10 +406,271 @@ cd /mnt/c
 
 navigate to the directory
 
+I have EC2 instance key pair file inside secures folder, So I am going inside that.
+
+raajesh@LAPTOP-UN5K40HI:/mnt/c/users/admin/desktop/raajesh/emlo/Session10AWSCodeCommitBuildDeploy-main/codes/secures$
+
+“cp EC2KeyPairForS3.pem ~/” - ran this command.
+
+we are basically copying this file from windows directory to ubuntu home..
+
+then do cd
+
+our file will be there in ubuntu home now
+
+chmod 400 session10ec2keypair.pem
+
+do - ssh -i "session10ec2keypair.pem" ubuntu@ec2-3-14-29-113.us-east-2.compute.amazonaws.com
+
+we are connected!
+
+now
+
+“sudo apt-get update”
+
+“sudo apt-get install ruby”
+
+“wget https://aws-codedeploy-us-east-1.s3.us-east-1.amazonaws.com/latest/install”
+
+“chmod +x ./install”
+
+“sudo ./install auto”
+
+Our code deploy agent should be up now.
+
+to check - sudo service codedeploy-agent status
+
+Our code deploy agent is ready now..
 
 
-Basically, we will have an EC2 instance, we will be creating app from code deploy and deployment group and all, from git bash local we then do code-deploy ..
 
-We will be using separate code commit repo.
+##### Lets go back to our repo where we did npx react app - session10codedeploy
 
-So we are hosting react app on EC2 instance created using code-deploy.
+rename app.js to index.js
+
+changed code on index.js
+
+const { application } = require("express");
+
+const express = require("express");
+
+const app = express();
+
+const port  = 3000;
+
+app.get("/", (req, res) => {
+
+  res.send("CodeDeploy Sample V1!");
+
+});
+
+app.get("/status", (req, res) => {
+
+  res.send("ok");
+
+});
+
+app.listen(port, () => {
+
+  console.log(`Example app listening at http://localhost: ${port}`);
+
+});
+
+##### Create new appspec.yml file
+
+We are going to specify what to do at what stage.
+
+version: 0.0
+
+os: linux
+
+files:
+
+  \- source: /
+
+​    destination: /home/ubuntu/app
+
+hooks:
+
+  ApplicationStop:
+
+​    \- location: scripts/stop_server.sh
+
+​      timeout: 300
+
+​      runas: root
+
+  BeforeInstall:
+
+​    \- location: scripts/before_install.sh
+
+​      timeout: 300
+
+​      runas: root      
+
+  AfterInstall:
+
+​    \- location: scripts/after_install.sh
+
+​      timeout: 300
+
+​      runas: root 
+
+  ApplicationStart:
+
+​    \- location: scripts/start_server.sh
+
+​      timeout: 300
+
+​      runas: root 
+
+  ValidateService:
+
+​    \- location: scripts/validate_service.sh
+
+​      timeout: 300
+
+​      runas: root                   
+
+
+
+Now we need to add those files.
+
+we added all those files inside scripts folder
+
+this is for every time server restarts, it executes all these from appspec.yml file
+
+did git push!
+
+Our deployment code is ready now.
+
+But our code deploy is not up, so go to code deploy.
+
+
+
+##### Code Deploy
+
+create application
+
+name and select ec2
+
+create deployment group
+
+create new role
+
+go to iam roles
+
+create role
+
+aws service
+
+use cases - code deploy
+
+##### select the role and it must appear now
+
+now we have to connect our ec2 instance using key value pair
+
+so first create tags on the ec2 instance.
+
+disabling load balancer as of now
+
+Deployment group is done
+
+Now we need to create the deployment.
+
+we have to enter our revision location - basically s3 path.
+
+for that...
+
+lets do
+
+actually we are deploying to ec2 and also do a copy to s3.
+
+C:\Users\Admin\Desktop\Raajesh\EMLO\Session10AWSCodeCommitBuildDeploy-main\Personal Account\session10codedeploy>aws deploy push --application-name session10codedeployapp --s3-location s3://session10-static/codedeploydemo/app.zip --ignore-hidden-files --region us-east-1
+
+To deploy with this revision, run:
+aws deploy create-deployment --application-name session10codedeployapp --s3-location bucket=session10-static,key=codedeploydemo/app.zip,bundleType=zip,eTag=304736dc4a195422fd94b2847f69c079 --deployment-group-name <deployment-group-name> --deployment-config-name <deployment-config-name> --description <description>
+
+It created one folder on our s3 bucket.
+
+Now go back to code deploy
+
+now if you refresh, it will show you s3 bucket location..
+
+select overwrite the content
+
+Created Deployment!
+
+This deployment gets failed since npm install is not done on our EC2 instance.
+
+So on ubuntu terminal (make sure you connected to ec2)..
+
+ubuntu@ip-172-31-90-239:~$ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+​                                 Dload  Upload   Total   Spent    Left  Speed
+100 15037  100 15037    0     0   564k      0 --:--:-- --:--:-- --:--:--  564k
+=> nvm is already installed in /home/ubuntu/.nvm, trying to update using git
+=> => Compressing and cleaning up git repository
+
+=> nvm source string already in /home/ubuntu/.bashrc
+=> bash_completion source string already in /home/ubuntu/.bashrc
+=> Close and reopen your terminal to start using nvm or run the following to use it now:
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+execute all commands above.
+
+then nvm install v14
+
+npm i -g pm2 (this helps on scaling).
+
+then
+
+n=$(which node);n=${n%/bin/node}; chmod -R 755 $n/bin/*; sudo cp -r $n/{bin,lib,share} /usr/local
+
+above is for proper permission and moving our files to root folder
+
+##### Now retry deployment, and everything will work.
+
+##### Assignment Part 2
+
+I am creating new deployment!
+
+go to code deploy
+
+go inside your app
+
+go inside your deployment group created
+
+created new deployment
+
+##### Done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
