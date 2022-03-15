@@ -1,5 +1,7 @@
 ##### Session Notes
+
 https://071652668689.signin.aws.amazon.com/console
+
 ##### For a normal user
 
 ##### pip install git-remote-codecommit
@@ -647,6 +649,112 @@ go inside your deployment group created
 created new deployment
 
 ##### Done
+
+Now go to instances, click public IP, have ‘http’ with port 3000.
+
+we can see our app deployed.
+
+##### Enable bucket versioning on S3
+
+
+
+
+
+
+
+##### Session11 - Autoscaling
+
+we normally have autoscaling option while we create instance but then it is going to linked with load balancer.
+
+Now lets create image on our instance, right click your instance, image and templates, create image.
+
+Give image name.
+
+When you create image of your instance, usually system shuts down for a while, creates image and all.
+
+so we have to do few things on our instance first.
+
+“sudo su -”
+
+“pm2 ls”
+
+“pm2 startup”
+
+“pm2 save”
+
+we saved config files, these are the things must be there before creating the image.
+
+##### Now go back to instance and create image.
+
+##### Create Autoscaling group
+
+First make launch configuration from autoscaling.
+
+you can see your images from AMI - FYI
+
+select the image on AMI dropdown
+
+add rule
+
+custom tcp rule
+
+port range 3000
+
+source type anywhere
+
+##### Key pair
+
+choose existing key pair
+
+Launch configuration is ready!
+
+##### Now create auto scaling group
+
+give name
+
+switch to launch configuration
+
+and give the launch configuration created.
+
+select availability zones (all)
+
+
+
+On the next - we are going to select load balancer
+
+so first create load balancer and choose here.
+
+Go to load balancers
+
+create application load balancer.
+
+Create security group here..
+
+add rule
+
+select that security group..
+
+now after that on listeners.
+
+add listener..
+
+port 3000
+
+create target group now..
+
+add it to pending..
+
+then create target group.
+
+back to load balancer
+
+choose target policy as cpu utilization 80%
+
+all done
+
+so we can see 3 instances!
+
+
 
 
 
