@@ -1,5 +1,5 @@
 ##### Session Notes
-
+https://071652668689.signin.aws.amazon.com/console
 ##### For a normal user
 
 ##### pip install git-remote-codecommit
